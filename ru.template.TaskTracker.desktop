@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=ru.template.TaskTracker
+Exec=/usr/bin/ru.template.TaskTracker
+Name=Template
+Name[ru]=TaskTracker
+
+[X-Application]
+Permissions=PushNotifications
+OrganizationName=ru.template
+ApplicationName=TaskTracker
+ExecDBus=/usr/bin/ru.template.TaskTracker
