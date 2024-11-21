@@ -99,62 +99,78 @@
 <context>
     <name>MainPage</name>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="116"/>
+        <location filename="../qml/pages/MainPage.qml" line="57"/>
+        <location filename="../qml/pages/MainPage.qml" line="59"/>
+        <source>Не забудь про сегодняшнюю задачу!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="58"/>
+        <source>Notification body</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="60"/>
+        <source>Notification preview body</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="161"/>
         <source>Template</source>
         <translation>Template</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="154"/>
+        <location filename="../qml/pages/MainPage.qml" line="200"/>
         <source>пн</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="166"/>
+        <location filename="../qml/pages/MainPage.qml" line="212"/>
         <source>вт</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="177"/>
+        <location filename="../qml/pages/MainPage.qml" line="223"/>
         <source>ср</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="188"/>
+        <location filename="../qml/pages/MainPage.qml" line="234"/>
         <source>чт</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="199"/>
+        <location filename="../qml/pages/MainPage.qml" line="245"/>
         <source>пт</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="210"/>
+        <location filename="../qml/pages/MainPage.qml" line="256"/>
         <source>сб</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="221"/>
+        <location filename="../qml/pages/MainPage.qml" line="267"/>
         <source>вс</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="245"/>
+        <location filename="../qml/pages/MainPage.qml" line="291"/>
         <source>Поиск</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="253"/>
+        <location filename="../qml/pages/MainPage.qml" line="299"/>
         <source>Новая задача</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="258"/>
+        <location filename="../qml/pages/MainPage.qml" line="304"/>
         <source>Все задачи</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="267"/>
+        <location filename="../qml/pages/MainPage.qml" line="313"/>
         <source>Меню</source>
         <translation type="unfinished"></translation>
     </message>
@@ -162,27 +178,32 @@
 <context>
     <name>ShowAllTasks</name>
     <message>
-        <location filename="../qml/pages/ShowAllTasks.qml" line="173"/>
+        <location filename="../qml/pages/ShowAllTasks.qml" line="208"/>
         <source>назад</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ShowAllTasks.qml" line="182"/>
+        <location filename="../qml/pages/ShowAllTasks.qml" line="217"/>
         <source>Новая задача</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ShowAllTasks.qml" line="208"/>
+        <location filename="../qml/pages/ShowAllTasks.qml" line="243"/>
         <source>Поиск</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ShowAllTasks.qml" line="227"/>
-        <source>По дате</source>
+        <location filename="../qml/pages/ShowAllTasks.qml" line="265"/>
+        <source>По дате (по убыванию)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/ShowAllTasks.qml" line="232"/>
+        <location filename="../qml/pages/ShowAllTasks.qml" line="275"/>
+        <source>По дате (по возрастанию)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ShowAllTasks.qml" line="285"/>
         <source>По названию</source>
         <translation type="unfinished"></translation>
     </message>

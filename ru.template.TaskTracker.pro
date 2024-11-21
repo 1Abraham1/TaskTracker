@@ -17,6 +17,7 @@ HEADERS += \
 DISTFILES += \
     ../../Загрузки/delete_icon.png \
     qml/icons/delete_icon.png \
+    qml/icons/white_circle.png \
     qml/pages/AddEventPage.qml \
     qml/pages/DBTaskPage.qml \
     qml/pages/DayPage.qml \

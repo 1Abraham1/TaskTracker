@@ -28,7 +28,8 @@ Page {
         spacing: 4
 
         Repeater {
-            model: ["#33B5E5", "#99CC00", "#FFBB33", "#FF4444", "pink"]
+            model: ["#33B5E5", "#99CC00", "#FFBB33", "#FF4444", "pink",
+            "red"]
             Button {
                 id: rect
                 color: modelData

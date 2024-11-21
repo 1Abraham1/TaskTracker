@@ -20,7 +20,6 @@ Page {
         updateRows()
     }
     function updateRows() {
-        console.log('updateRows:', current_day.day.toString(), current_day.month.toString(), current_day.year.toString())
         taskModel.clear()
         selectRows(current_day.day.toString(), current_day.month.toString(), current_day.year.toString())
         if (empty) {empty_layout.visible = true}
@@ -257,16 +256,6 @@ Page {
                 spacing: 30
                 contentHeight: menu.height
                 model: taskModel
-//                headerItem: Item{
-//                    Rectangle {
-//                        height: 1
-//                        width: 1
-//                        color: "transparent"
-//                        Text {
-//                            text: ""
-//                        }
-//                    }
-//                }
 
                 delegate: MouseArea {
                     id: mouseArea
@@ -422,11 +411,4 @@ Page {
         }
 
     }
-//    Component.onCompleted: {
-//        initializeDatabase()
-//        console.log("-----------")
-//        console.log("current_day.coorect_date: " + current_day.coorect_date)
-//        selectRows(current_day.day.toString(), current_day.month.toString(), current_day.year.toString())
-//        if (empty) {empty_layout.visible = true}
-//    }
 }

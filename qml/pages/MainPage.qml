@@ -2,6 +2,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import "../../qml/pages/func.js" as Func
 import QtQuick.LocalStorage 2.0
+import Nemo.Notifications 1.0
 //import "../pages/DBTaskPage.qml"
 
 Page {
@@ -12,6 +13,10 @@ Page {
     property var db
     property var tasks
     property string _table: "Tasks"
+    property string todayDate: new Date()
+    onTodayDateChanged: {
+        console.log("todayDate:", todayDate)
+    }
 
     QtObject {
         id: model
@@ -44,6 +49,19 @@ Page {
         }
     }
 
+    Notification {
+        id: notification
+        appIcon: Qt.resolvedUrl("../icons/TaskTracker.svg")
+//                    icon: Qt.resolvedUrl("../icons/TaskTracker.svg")
+        appName: "Task Tracker"
+        summary: qsTr("Не забудь про сегодняшнюю задачу!")
+        body: qsTr("Notification body")
+        previewSummary: qsTr("Не забудь про сегодняшнюю задачу!")
+        previewBody: qsTr("Notification preview body")
+        onClicked: console.log("Clicked")
+        onClosed: console.log("Closed, reason: " + reason)
+    }
+
     function initializeDatabase() {
         var dbase = LocalStorage.openDatabaseSync("Tasks", "1.0", "Tasks
                 Database", 1000000)
@@ -53,6 +71,7 @@ Page {
         })
         db = dbase
     }
+
     Component.onCompleted: {
         initializeDatabase()
         selectRows()
@@ -74,6 +93,7 @@ Page {
                     model.desc = rs.rows.item(i).desc;
                     data.push(model.copy());
                     console.log("SELECT: " + model.name)
+//                    console.log()
                 }
                 if (data) {
                     tasks = data
@@ -81,9 +101,35 @@ Page {
 
             });
     }
+    function checkDateforNotification(d, m, y) {
+        var currentDate = new Date();
+        var ddate = Func.get_correct_date(d, m, y);
+        var f = false;
+        db.transaction(function (tx) {
+                var rs = tx.executeSql("SELECT rowid, * FROM " + _table);
+                var data = [];
+                for (var i = 0; i < rs.rows.length; i++) {
+                    model.id = rs.rows.item(i).rowid;
+                    model.date = rs.rows.item(i).date;
+                    model.name = rs.rows.item(i).name;
+                    model.desc = rs.rows.item(i).desc;
+                    var check_split = model.date.split(".");
+                    var check_date = Func.get_correct_date(check_split[0], check_split[1], check_split[2])
+                    var curr_split = currentDate.toTimeString().split(":")
+                    var curr_date = Func.get_correct_date(curr_split[0], curr_split[1], curr_split[2]);
+//                    console.log("curYear:", )
+                    if (check_date === curr_date &
+                            (curr_split[0] === "21" & curr_split[1] === "20")) {
+                        notification.body = model.name
+                        notification.previewBody = model.name
+                        console.log("notification.publish()")
+                        notification.publish()
+                    }
+                }
+            });
+    }
     function checkDate(d, m, y) {
         var ddate = Func.get_correct_date(d, m, y);
-//        console.log("function checkDate: " + ddate)
         var f = false;
         db.transaction(function (tx) {
                 var rs = tx.executeSql("SELECT rowid, * FROM " + _table);
@@ -97,7 +143,6 @@ Page {
                     var dmy = model.date.split(".");
                     var insert_date = Func.get_correct_date(dmy[0], dmy[1], dmy[2]);
                     if (insert_date === ddate) {
-                        console.log("CHECK: " + model.name)
                         f = true
                     }
                 }
@@ -125,6 +170,7 @@ Page {
                 onClicked: pageStack.push(Qt.resolvedUrl("AboutPage.qml"))
             },
             Button {
+                id: addButton
                 objectName: "add_event_button"
                 backgroundColor: "transparent"
                 color: "#e30000"
@@ -134,12 +180,35 @@ Page {
                 Text {
                     text: "+"
                     color: "#e30000"
-                    font.pixelSize: Theme.fontSizeExtraLarge
+                    font.pixelSize: Theme.fontSizeHuge
                     anchors.centerIn: parent
                 }
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: pageStack.push(Qt.resolvedUrl("AddEventPage.qml"))
+            },Button {
+                id: allButton
+                objectName: "add_event_button"
+                backgroundColor: "transparent"
+                color: "white"
+                highlightColor: "red"
+                anchors.left: addButton.right
+
+                width: Theme.buttonWidthMedium
+
+                Text {
+                    text: qsTr("Задачи")
+                    color: "white"
+                    font.pixelSize: Theme.fontSizeLarge
+                    font.styleName: "Times New Roman"
+                    anchors.centerIn: parent
+                }
+                anchors.verticalCenter: parent.verticalCenter
+                onClicked: {
+                    var page = pageStack.push(Qt.resolvedUrl("ShowAllTasks.qml"));
+                    page.init()
+                }
             }
+
         ]
     }
     Row {
@@ -343,6 +412,7 @@ Page {
                                     }
                                 }
                                 delegate: MouseArea {
+                                    id: delegat
                                     width: datePicker.cellWidth
                                     height: datePicker.cellHeight
 
@@ -362,6 +432,33 @@ Page {
                 //                        font.bold: holiday
                                         font.pixelSize: !holiday? Theme.fontSizeMedium : Theme.fontSizeExtraSmall
                                     }
+//                                    Icon {
+//                                        id: mark
+//                                        anchors.bottom: parent.bottom
+////                                        anchors.horizontalCenter: parent.horizontalCenter
+//                                        anchors.centerIn: parent
+//                                        source: Qt.resolvedUrl("../icons/white_circle.png")
+////                                        color: "transparent"
+
+//                                        height: 30
+//                                        width: 30
+//                                        visible: false
+//                                        property int cnt: pageStack.depth
+//                                        onCntChanged: {
+
+//                                            if (cnt == 1) {
+//                                                if (checkDate(String(day), String(month), String(year))) {
+//                                                    mark.visible = true
+//                                                } else {mark.visible = false}
+//                                            }
+//                                        }
+//                                        Component.onCompleted: {
+////                                            initializeDatabase()
+//                                            if (checkDate(String(day), String(month), String(year))) {
+//                                                mark.visible = true
+//                                            } else {mark.visible = false}
+//                                        }
+//                                    }
                                     Label {
                                         id: mark
                                         anchors.top: dd.bottom
@@ -550,6 +647,7 @@ Page {
                                         id: mark3
                                         anchors.top: dd3.bottom
                                         anchors.horizontalCenter: parent.horizontalCenter
+
                                         text: "*"
                                         font.pixelSize: Theme.fontSizeExtraLarge
                                         visible: false

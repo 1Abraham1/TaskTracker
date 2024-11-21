@@ -16,6 +16,7 @@ Page {
     property string _table: "Tasks"
     property double koaff: 0.66
     property int pageCount: pageStack.depth
+    property string context_menu_state: "date_down"
     onPageCountChanged: {
         updateRows()
     }
@@ -112,24 +113,57 @@ Page {
                     task.setName(modell.name);
                     task.setDate(modell.date);
                     task.setDesc(modell.desc);
-                    if (true) {
-
-                        taskModel.append({"id": task.getID(),
-                                          "date": task.getDate(),
-                                          "name": task.getName(),
-                                          "desc": task.getDesc(),
-                                          "index": ind})
-
-
-                        ind++;
-                        console.log("SELECT: " + task.getName())
-                        data.push({"id": task.getID(),
-                                      "date": task.getDate(),
-                                      "name": task.getName(),
-                                      "desc": task.getDesc(),
-                                      "index": ind});
-                    }
+                    ind++;
+                    data.push({"id": task.getID(),
+                                  "date": task.getDate(),
+                                  "name": task.getName(),
+                                  "desc": task.getDesc(),
+                                  "index": ind});
+//                    if (search !== undefined) {
+//                        if (task.getName().indexOf(search) !== -1) {
+//                            ind++;
+//                            data.push({"id": task.getID(),
+//                                          "date": task.getDate(),
+//                                          "name": task.getName(),
+//                                          "desc": task.getDesc(),
+//                                          "index": ind});
+//                        }
+//                    } else {
+//                        ind++;
+//                        data.push({"id": task.getID(),
+//                                      "date": task.getDate(),
+//                                      "name": task.getName(),
+//                                      "desc": task.getDesc(),
+//                                      "index": ind});
+//                    }
                 }
+                console.log("TABLE SELECTED")
+                if (mode === undefined) {
+                    Func.sortArray(data, context_menu_state)
+                    console.log("sortBy date")
+                } else {
+                    Func.sortArray(data, mode)
+                    console.log("sortBy", mode)
+                }
+                if (search !== undefined /*& search !== ""*/) {
+//                    Func.fullTextSearchAdvanced(data, search)
+                    data = Func.fullTextSearch(data, search)
+                    console.log("searchBy", search)
+                } else {
+                    console.log("emptySearch")
+                }
+                console.log("data:", data)
+                for (i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    taskModel.append({
+                         "id": item.id,
+                         "date": item.date,
+                         "name": item.name,
+                         "desc": item.desc,
+                         "index": item.index
+                    })
+                }
+
                 if (data.length == 0) {
                     console.log("data:", data)
                     empty = true
@@ -154,6 +188,7 @@ Page {
     function init(search_flag){
         console.log("init")
         initializeDatabase()
+        context_menu.state = "date_down"
         selectRows()
         if (empty) {empty_layout.visible = true}
         if (search_flag === 1) {search.visible = true; search.focus = true}
@@ -207,15 +242,17 @@ Page {
             cursorColor: "red"
             placeholderText: qsTr("Поиск")
             onTextChanged: {
-                if (search.text != "") {
-                    taskModel.clear()
-                    selectRows(search.text)
-                } else {console.log("no search")}
+                taskModel.clear()
+                selectRows(search.text)
+//                if (search.text != "") {
+//                    taskModel.clear()
+//                    selectRows(search.text)
+//                } else {console.log("no search")}
             }
         }
         ComboBox {
             width: page.width
-            anchors.centerIn: rec_space
+//            anchors.centerIn: rec_space
             highlightedColor: "red"
             _backgroundRadius: 10
 
@@ -223,15 +260,36 @@ Page {
             description: "Сортировать"
             valueColor: "white"
             menu: ContextMenu {
+                id: context_menu
                 MenuItem {
-                    text: qsTr("По дате")
+                    text: qsTr("По дате (по убыванию)")
                     color: "white"
-                    onClicked: {}
+                    onClicked: {
+                        taskModel.clear()
+                        page.context_menu_state = "date_down"
+                        console.log("state:", context_menu.state)
+                        selectRows(search.text, "date_down")
+                    }
+                }
+                MenuItem {
+                    text: qsTr("По дате (по возрастанию)")
+                    color: "white"
+                    onClicked: {
+                        taskModel.clear()
+                        page.context_menu_state = "date_up"
+                        console.log("state:", context_menu.state)
+                        selectRows(search.text, "date_up")
+                    }
                 }
                 MenuItem {
                     text: qsTr("По названию")
                     color: "white"
-                    onClicked: {}
+                    onClicked: {
+                        taskModel.clear()
+                        page.context_menu_state = "name"
+                        console.log("state:", context_menu.state)
+                        selectRows(search.text, "name")
+                    }
                 }
             }
         }

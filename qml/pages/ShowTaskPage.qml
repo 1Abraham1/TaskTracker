@@ -1,8 +1,10 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import "../../qml/pages/func.js" as Func
 //import "../pages/DBTaskPage.qml"
 import QtQuick.LocalStorage 2.0
 import Module.Task 1.0
+import Nemo.Notifications 1.0
 
 Page {
      id: page
@@ -54,6 +56,14 @@ Page {
          }
      }
 
+     Notification {
+         id: notification
+//         appName: "Task Tracker"
+//         summary: qsTr("Не забудь про сегодняшнюю задачу!")
+//         body: qsTr("Notification body")
+//         previewSummary: qsTr("Не забудь про сегодняшнюю задачу!")
+//         previewBody: qsTr("Notification preview body")
+     }
 
      Task {
          id: task
@@ -208,20 +218,21 @@ Page {
                             "name": model.name,
                             "date": model.date,
                             "desc": model.desc};
-                        updateRow(data);
-                        succes.visible = true;
+                        if (desc.text == "" |
+                                date.text == "" |
+                                name.text == "" | !(Func.isValidDate(date.text))){
+                            notification.previewBody = "!"
+                            notification.previewSummary = qsTr("Введите данные корректно")
+                        }
+                        else {
+                            updateRow(data);
+                            notification.previewBody = "!"
+                            notification.previewSummary = qsTr("Успешно сохраненно")
+                        }
+                        notification.publish()
+//                        succes.visible = true;
                     }
                 }
-//                Button {
-//                    id: show
-//                    anchors.horizontalCenter: parent.horizontalCenter
-////                    anchors.top: circle.bottom
-//                    backgroundColor: button_color
-//                    color: "white"
-//                    text: "Показать"
-//                    onClicked: selectRows()
-
-//                }
 
                 Label {
                     id: result1

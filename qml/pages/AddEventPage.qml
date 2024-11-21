@@ -1,7 +1,9 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import "../../qml/pages/func.js" as Func
 //import "../pages/DBTaskPage.qml"
 import QtQuick.LocalStorage 2.0
+import Nemo.Notifications 1.0
 
 Page {
      id: page
@@ -42,6 +44,10 @@ Page {
                  "desc": desc
              };
          }
+     }
+     Notification {
+         id: notification
+
      }
 
 
@@ -197,8 +203,19 @@ Page {
                     color: "white"
                     text: "Сохранить"
                     onClicked: {
-                        addRow()
-                        succes.visible = true
+                        if (desc.text == "" |
+                                date.text == "" |
+                                name.text == "" | !(Func.isValidDate(date.text))){
+                            notification.previewBody = "!"
+                            notification.previewSummary = qsTr("Введите данные корректно")
+                        }
+                        else {
+                            addRow()
+                            notification.previewBody = "!"
+                            notification.previewSummary = qsTr("Успешно сохраненно")
+                        }
+                        notification.publish()
+//                        succes.visible = true
                         desc.text = ""
                         date.text = ""
                         name.text = ""

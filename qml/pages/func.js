@@ -1,10 +1,56 @@
-function func() {
+function sortArray(arr, sortBy) {
+  if (!Array.isArray(arr)) {
+    throw new Error("Первый аргумент должен быть массивом.");
+  }
 
+  if (!(sortBy === 'date_up' | sortBy === 'date_down' | sortBy === 'name')){
+    throw new Error("Параметр сортировки должен быть 'date' или 'name'.");
+  }
+
+  return arr.sort(function (a, b) {
+      var current_date = new Date();
+      var arr_a = a.date.split(".");
+      var dateA = new Date(arr_a[2], arr_a[1], arr_a[0]);
+      var arr_b = b.date.split(".");
+      var dateB = new Date(arr_b[2], arr_b[1], arr_b[0]);
+      if (sortBy === 'date_down') {
+      // Сортировка по дате
+          return dateB - dateA;
+      }
+      else if (sortBy === 'date_up') {
+          return dateA - dateB;
+      }
+      else if (sortBy === 'name') {
+          // Сортировка по названию (лексикографически)
+          return a.name.localeCompare(b.name);
+    }
+  });
 }
+
+function fullTextSearchAdvanced(array, search) {
+    // Разделяем запрос на слова и создаем регулярное выражение
+    var words = search.split(/\s+/).map(function (word) {word.toLowerCase()});
+    var regex = new RegExp(words.join('|'), 'i'); // "Или" между словами
+
+    return array.filter(function (item) {return regex.test(item.name)});
+}
+
+function fullTextSearch(array, search) {
+    // Приводим запрос и элементы массива к нижнему регистру для нечувствительности к регистру
+    var normalizedSearch = search.toLowerCase();
+    var searchWords = normalizedSearch.split(/\s+/); // Разбиваем запрос на слова
+
+    return array.filter(function (item) {
+        var normalizedItem = item.name.toLowerCase(); // Приводим элемент массива к нижнему регистру
+        // Проверяем, содержит ли элемент все слова из запроса
+        return searchWords.every(function (word) {return normalizedItem.indexOf(word) !== -1});
+    });
+}
+
 function get_month(m) {
     var months = ['Январь', "Февраль", "Март",
              "Апрель", "Май", "Июнь", "Июль",
-             "Август", "Сентябрь", "Октябрь", "Ноябрь"]
+             "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
     return months[m-1]
 }
 
@@ -21,10 +67,33 @@ function get_day_week(form) {
     }
     return false
 }
+
+function isValidDate(dateString) {
+    var regex = /^(?:(?:31(\/|-|\.)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-|\.)(?:0?[13-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-|\.)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})$/
+    if (!regex.test(dateString)) {
+        return false; // Формат неверный
+    }
+
+    // Разбиваем строку на компоненты
+    var splitdate = dateString.split('.').map(Number);
+    var year, month, day;
+    year = splitdate[2];
+    month = splitdate[1];
+    day = splitdate[0];
+
+    // Проверяем корректность даты
+    var date = new Date(year, month - 1, day); // Месяцы начинаются с 0
+
+    // Проверяем, совпадают ли введенные значения с созданной датой
+    return date.getFullYear() === year &&
+           date.getMonth() === month - 1 &&
+           date.getDate() === day;
+}
+
 function get_correct_month(m) {
     var months = ['января', "февраля", "марта",
              "апреля", "мая", "июня", "июля",
-             "августа", "сентября", "октября", "ноября", "undef"]
+             "августа", "сентября", "октября", "ноября", "декабря"]
     return months[m-1]
 }
 
