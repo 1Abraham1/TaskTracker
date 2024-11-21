@@ -23,6 +23,7 @@ Page {
          property string date: ""
          property string name: ""
          property string desc: ""
+         property bool complete: false
 
          function fromJson(json) {
              try {
@@ -30,6 +31,7 @@ Page {
                  date = json['date'];
                  name = json['name'];
                  desc = json['desc'];
+                 complete = json["complete"];
              } catch (e) {
                  return false;
              }
@@ -41,7 +43,8 @@ Page {
                  "id": id,
                  "date": date,
                  "name": name,
-                 "desc": desc
+                 "desc": desc,
+                 "complete": complete
              };
          }
      }
@@ -219,6 +222,7 @@ Page {
                         desc.text = ""
                         date.text = ""
                         name.text = ""
+                        pageStack.pop()
                     }
                 }
 //                Button {
@@ -232,20 +236,6 @@ Page {
 
 //                }
 
-                Label {
-                    id: result1
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                Label {
-                    id: result2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                Label {
-                    id: result3
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
             }
 
          }
@@ -253,8 +243,8 @@ Page {
      function addRow() {
          db.transaction(function (tx) {
              tx.executeSql(
-                 "INSERT INTO " + _table + " VALUES(?, ?, ?)",
-                 [ model.date, model.name, model.desc]
+                 "INSERT INTO " + _table + " VALUES(?, ?, ?, ?)",
+                 [ model.date, model.name, model.desc, model.complete]
              )
              console.log("INSERT: " + model.name)
          })
@@ -268,36 +258,17 @@ Page {
                      model.date = rs.rows.item(i).date;
                      model.name = rs.rows.item(i).name;
                      model.desc = rs.rows.item(i).desc;
+                     model.complete = rs.rows.item(i).complete;
                      data.push(model.copy());
                      console.log("SELECT: " + model.name)
                  }
              });
      }
-     function updateRow(data) {
-         db.transaction(function (tx) {
-                 if (model.fromJson(data)) {
-                     if (model.id === 0) {
-                         tx.executeSql(
-                             "INSERT INTO " + _table + " VALUES(?, ?, ?)",
-                             [ model.date, model.name, model.desc]
-                         );
-                     } else {
-                         tx.executeSql(
-                             "UPDATE " + _table + " SET date=?, name=?, desc=? WHERE rowid=?",
-                             [ model.date, model.name, model.desc, model.id]
-                         );
-                     }
-                     console.log("UPDATE: " + model.name)
-                 }
-             }
-         );
-         selectRows();
-     }
      function initializeDatabase() {
          var dbase = LocalStorage.openDatabaseSync("Tasks", "1.0", "Tasks
                  Database", 1000000)
          dbase.transaction(function(tx) {
-             tx.executeSql("CREATE TABLE IF NOT EXISTS " + _table + "(date TEXT, name TEXT, desc TEXT)");
+             tx.executeSql("CREATE TABLE IF NOT EXISTS " + _table + "(date TEXT, name TEXT, desc TEXT, complete BOOL)");
              console.log("Table created!")
          })
          db = dbase

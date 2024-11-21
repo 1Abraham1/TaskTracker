@@ -230,23 +230,9 @@ Page {
                             notification.previewSummary = qsTr("Успешно сохраненно")
                         }
                         notification.publish()
+                        pageStack.pop()
 //                        succes.visible = true;
                     }
-                }
-
-                Label {
-                    id: result1
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                Label {
-                    id: result2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                Label {
-                    id: result3
-                    anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
 
@@ -299,7 +285,7 @@ Page {
          var dbase = LocalStorage.openDatabaseSync("Tasks", "1.0", "Tasks
                  Database", 1000000)
          dbase.transaction(function(tx) {
-             tx.executeSql("CREATE TABLE IF NOT EXISTS " + _table + "(date TEXT, name TEXT, desc TEXT)");
+             tx.executeSql("CREATE TABLE IF NOT EXISTS " + _table + "(date TEXT, name TEXT, desc TEXT, complete BOOL)");
              console.log("Table created!")
          })
          db = dbase

@@ -21,6 +21,8 @@ public slots:
     Q_INVOKABLE QString getDesc() {return desc;}
     Q_INVOKABLE void setID(QString _id) {id = _id;}
     Q_INVOKABLE QString getID() {return id;}
+    Q_INVOKABLE void setComplete(bool _complete) {complete = _complete;}
+    Q_INVOKABLE bool getComplete() {return complete;}
 
 //    QString name() {return name;};
 //    QDate date();
@@ -33,6 +35,7 @@ private:
     QString name;
     QString date;
     QString desc;
+    bool complete;
 };
 
 #endif // TASK_H

@@ -17,6 +17,7 @@ Page {
     property double koaff: 0.66
     property int pageCount: pageStack.depth
     property string context_menu_state: "date_down"
+    property bool have_search: false
     onPageCountChanged: {
         updateRows()
     }
@@ -24,7 +25,7 @@ Page {
     function updateRows() {
         taskModel.clear()
         selectRows()
-        if (empty) {empty_layout.visible = true}
+        if (empty) {empty_layout.visible = true; progress_layout.visible = false}
     }
     Task {
         id: task
@@ -36,6 +37,7 @@ Page {
         property string date: ""
         property string name: ""
         property string desc: ""
+        property bool complete: false
 
         function fromJson(json) {
             try {
@@ -43,6 +45,7 @@ Page {
                 date = json['date'];
                 name = json['name'];
                 desc = json['desc'];
+                complete = json["complete"];
             } catch (e) {
                 return false;
             }
@@ -54,7 +57,8 @@ Page {
                 "id": id,
                 "date": date,
                 "name": name,
-                "desc": desc
+                "desc": desc,
+                "complete": complete
             };
         }
     }
@@ -81,21 +85,35 @@ Page {
         );
         updateRows()
     }
-    function updateRow(id) {
-        db.transaction(function (tx) {
-                tx.executeSql("UPDATE FROM " + _table + " WHERE rowid=" + parseInt(id));
-            }
-        );
-        updateRows()
-    }
     function deleteTask(bid, bindex, bname) {
         taskModel.remove(bindex)
         console.log("DELETED:", bid, "name", bname)
         deleteRow(bid)
     }
-    function updateTask(bid, bindex, bname) {
-        console.log("UPDATED:", bid, "name", bname)
-        deleteRow(bid)
+    function updateComplete(id, complete, name){
+        db.transaction(function (tx) {
+            tx.executeSql(
+                "UPDATE " + _table + " SET complete=? WHERE rowid=?",
+                [complete, id]
+            );
+            console.log("CHANGE STATUS:", name, complete)
+        }
+
+        );
+    }
+    function updateProgress() {
+        db.transaction(function (tx) {
+                var rs = tx.executeSql("SELECT rowid, * FROM " + _table);
+                var all_task = 0;
+                var complete_task = 0;
+                for (var i = 0; i < rs.rows.length; i++) {
+                    modell.complete = rs.rows.item(i).complete;
+                    task.setComplete(modell.complete);
+                    all_task++;
+                    if (task.getComplete()) {complete_task++}
+                }
+                progress_bar.value = (complete_task/all_task)*100;
+            });
     }
 
     function selectRows(search, mode) {
@@ -104,20 +122,25 @@ Page {
                 var rs = tx.executeSql("SELECT rowid, * FROM " + _table);
                 var data = [];
                 var ind = 0;
+                var complete_task = 0;
                 for (var i = 0; i < rs.rows.length; i++) {
                     modell.id = rs.rows.item(i).rowid;
                     modell.date = rs.rows.item(i).date;
                     modell.name = rs.rows.item(i).name;
                     modell.desc = rs.rows.item(i).desc;
+                    modell.complete = rs.rows.item(i).complete;
                     task.setID(modell.id);
                     task.setName(modell.name);
                     task.setDate(modell.date);
                     task.setDesc(modell.desc);
+                    task.setComplete(modell.complete)
                     ind++;
+                    if (task.getComplete()) {complete_task++}
                     data.push({"id": task.getID(),
                                   "date": task.getDate(),
                                   "name": task.getName(),
                                   "desc": task.getDesc(),
+                                  "complete": task.getComplete(),
                                   "index": ind});
 //                    if (search !== undefined) {
 //                        if (task.getName().indexOf(search) !== -1) {
@@ -137,6 +160,7 @@ Page {
 //                                      "index": ind});
 //                    }
                 }
+                progress_bar.value = parseInt((complete_task/ind)*100);
                 console.log("TABLE SELECTED")
                 if (mode === undefined) {
                     Func.sortArray(data, context_menu_state)
@@ -149,6 +173,7 @@ Page {
 //                    Func.fullTextSearchAdvanced(data, search)
                     data = Func.fullTextSearch(data, search)
                     console.log("searchBy", search)
+//                    progress_layout.visible = false
                 } else {
                     console.log("emptySearch")
                 }
@@ -160,6 +185,7 @@ Page {
                          "date": item.date,
                          "name": item.name,
                          "desc": item.desc,
+                         "complete": item.complete,
                          "index": item.index
                     })
                 }
@@ -171,6 +197,7 @@ Page {
                     console.log("data: hear")
                     page.empty = false;
                     empty_layout.visible = false;
+                    if (!have_search) {progress_layout.visible = true;}
                 }
             });
     }
@@ -179,7 +206,7 @@ Page {
         var dbase = LocalStorage.openDatabaseSync("Tasks", "1.0", "Tasks
                 Database", 1000000)
         dbase.transaction(function(tx) {
-            tx.executeSql("CREATE TABLE IF NOT EXISTS " + _table + "(date TEXT, name TEXT, desc TEXT)");
+            tx.executeSql("CREATE TABLE IF NOT EXISTS " + _table + "(date TEXT, name TEXT, desc TEXT, complete BOOL)");
             console.log("Table connected!")
         })
         db = dbase
@@ -190,8 +217,13 @@ Page {
         initializeDatabase()
         context_menu.state = "date_down"
         selectRows()
-        if (empty) {empty_layout.visible = true}
-        if (search_flag === 1) {search.visible = true; search.focus = true}
+        if (empty) {empty_layout.visible = true; progress_layout.visible = false}
+        if (search_flag === 1) {
+            search.visible = true;
+            search.focus = true;
+            page.have_search = true;
+            progress_layout.visible = false
+        }
     }
 
     PageHeader {
@@ -390,7 +422,8 @@ Page {
                                         font.pixelSize: Theme.fontSizeLarge
                                     }
                                 }
-
+                                Column {
+                                spacing: Theme.paddingLarge*3.4
                                 Button {
                                     id: btnDelete
                                     property int bindex: model.index
@@ -398,6 +431,8 @@ Page {
                                     property string bdate: model.date
                                     property string bname: model.name
                                     property string bdesc: model.desc
+                                    property bool bcomplete: model.complete
+
                                     height: 50
                                     width: 80
                                     icon {
@@ -447,6 +482,16 @@ Page {
 //                                        }
 //                                    }
                                 }
+                                TextSwitch {
+                                    id: complete_switch
+                                    checked: model.complete
+                                    leftMargin: 25
+                                    onCheckedChanged: {
+                                        updateComplete(btnDelete.bid, checked, btnDelete.bname);
+                                        updateProgress()
+                                    }
+                                }
+                                }
                             }
                         }
                     }
@@ -489,6 +534,27 @@ Page {
                 }
             }
             VerticalScrollDecorator { }
+        }
+        Rectangle {
+            id: progress_layout
+
+            width: page.width
+            color: "#820101"
+            height: Theme.paddingLarge*12
+            anchors.bottom: flickable.bottom
+            ProgressBar {
+                id: progress_bar
+                anchors.centerIn: parent
+                anchors.top: parent.top
+                width: parent.width
+                height: Theme.paddingLarge*11
+                minimumValue: 0
+                maximumValue: 100
+
+                value: 50
+                label: qsTr("Выполнено на")
+                valueText: value + "%"
+            }
         }
 
     }

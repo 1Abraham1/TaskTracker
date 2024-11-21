@@ -22,7 +22,7 @@ Page {
     function updateRows() {
         taskModel.clear()
         selectRows(current_day.day.toString(), current_day.month.toString(), current_day.year.toString())
-        if (empty) {empty_layout.visible = true}
+        if (empty) {empty_layout.visible = true; progress_layout.visible = false}
     }
     Task {
         id: task
@@ -34,6 +34,7 @@ Page {
         property string date: ""
         property string name: ""
         property string desc: ""
+        property bool complete: false
 
         function fromJson(json) {
             try {
@@ -41,6 +42,7 @@ Page {
                 date = json['date'];
                 name = json['name'];
                 desc = json['desc'];
+                complete = json["complete"]
             } catch (e) {
                 return false;
             }
@@ -52,7 +54,8 @@ Page {
                 "id": id,
                 "date": date,
                 "name": name,
-                "desc": desc
+                "desc": desc,
+                "complete": complete
             };
         }
     }
@@ -63,6 +66,7 @@ Page {
 //            date: "01.01.2023"
 //            name: "Example1"
 //            desc: "example1"
+//            ststus: true
 //        }
 //        ListElement {
 //            date: "02.02.2023"
@@ -79,63 +83,54 @@ Page {
         );
         updateRows()
     }
-    function updateRow(id) {
-        db.transaction(function (tx) {
-                tx.executeSql("UPDATE FROM " + _table + " WHERE rowid=" + parseInt(id));
-            }
-        );
-        updateRows()
-    }
     function deleteTask(bid, bindex, bname) {
         taskModel.remove(bindex)
         console.log("DELETED:", bid, "name", bname)
         deleteRow(bid)
     }
+    function updateComplete(id, complete, name){
+        db.transaction(function (tx) {
+            tx.executeSql(
+                "UPDATE " + _table + " SET complete=? WHERE rowid=?",
+                [complete, id]
+            );
+            console.log("CHANGE STATUS:", name, complete)
+        }
 
-    function get_correct_date_my(d, m, y) {
-        var dd, mm, yyyy
-        if (d in ["1", "2", "3", "4", "5", "6", "7", '8', "9", "0"]) {
-            dd = "0" + d
-        } else {
-            dd = d
-        }
-        if (m in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]) {
-            mm = "0" + m
-        } else {
-            mm = m
-        }
-        yyyy = y
-//        console.log("in js: " + dd + "." + mm + "." + yyyy)
-        return dd + "." + mm + "." + yyyy
+        );
     }
     function selectRows(d, m, y) {
         var date_form = Func.get_correct_date(d, m, y)
-//        console.log("get_correct_date: " + date_form)
-//        console.log("d, m, y: " + d + "." + m + "." + y)
 
         db.transaction(function (tx) {
                 var rs = tx.executeSql("SELECT rowid, * FROM " + _table);
                 var data = [];
                 var ind = 0;
+                var complete_task = 0;
                 for (var i = 0; i < rs.rows.length; i++) {
                     modell.id = rs.rows.item(i).rowid;
                     modell.date = rs.rows.item(i).date;
                     modell.name = rs.rows.item(i).name;
                     modell.desc = rs.rows.item(i).desc;
-                    task.setID(modell.id)
-                    task.setName(modell.name)
-                    task.setDate(modell.date)
-                    task.setDesc(modell.desc)
+                    modell.complete = rs.rows.item(i).complete;
+                    task.setID(modell.id);
+                    task.setName(modell.name);
+                    task.setDate(modell.date);
+                    task.setDesc(modell.desc);
+                    task.setComplete(modell.complete);
+
                     var dmy = task.getDate().split(".");
                     var insert_date = Func.get_correct_date(dmy[0], dmy[1], dmy[2]);
                     if (date_form === insert_date) {
-                        taskModel.append({"id": task.getID(), "date": task.getDate(), "name": task.getName(), "desc": task.getDesc(), "index": ind})
+                        taskModel.append({"id": task.getID(), "date": task.getDate(), "name": task.getName(), "desc": task.getDesc(), "complete": task.getComplete(), "index": ind})
                         ind++;
                         console.log("SELECT: " + task.getName())
                         data.push(modell.copy());
+                        if (task.getComplete()) {complete_task++}
                     }
 
                 }
+                progress_bar.value = (complete_task/ind)*100;
                 if (data.length == 0) {
                     console.log("data:", data)
                     empty = true
@@ -143,7 +138,34 @@ Page {
                     console.log("data: hear")
                     page.empty = false;
                     empty_layout.visible = false;
+                    progress_layout.visible = true;
                 }
+            });
+    }
+    function updateProgress(d, m, y) {
+        var date_form = Func.get_correct_date(d, m, y)
+
+        db.transaction(function (tx) {
+                var rs = tx.executeSql("SELECT rowid, * FROM " + _table);
+                var data = [];
+                var ind = 0;
+                var complete_task = 0;
+                for (var i = 0; i < rs.rows.length; i++) {
+                    modell.date = rs.rows.item(i).date;
+                    modell.complete = rs.rows.item(i).complete;
+                    task.setDate(modell.date);
+                    task.setComplete(modell.complete);
+
+                    var dmy = task.getDate().split(".");
+                    var insert_date = Func.get_correct_date(dmy[0], dmy[1], dmy[2]);
+                    if (date_form === insert_date) {
+                        ind++;
+                        if (task.getComplete()) {complete_task++}
+                    }
+
+                }
+                progress_bar.value = (complete_task/ind)*100;
+
             });
     }
 
@@ -162,7 +184,7 @@ Page {
         var dbase = LocalStorage.openDatabaseSync("Tasks", "1.0", "Tasks
                 Database", 1000000)
         dbase.transaction(function(tx) {
-            tx.executeSql("CREATE TABLE IF NOT EXISTS " + _table + "(date TEXT, name TEXT, desc TEXT)");
+            tx.executeSql("CREATE TABLE IF NOT EXISTS " + _table + "(date TEXT, name TEXT, desc TEXT, complete BOOL)");
             console.log("Table connected!")
         })
         db = dbase
@@ -181,7 +203,7 @@ Page {
 
         initializeDatabase()
         selectRows(current_day.day.toString(), current_day.month.toString(), current_day.year.toString())
-        if (empty) {empty_layout.visible = true}
+        if (empty) {empty_layout.visible = true; progress_layout.visible = false}
     }
 
     PageHeader {
@@ -303,12 +325,19 @@ Page {
                                         width: page.koaff*page.width
                                         font.pixelSize: Theme.fontSizeLarge
                                     }
-                                    Text {
-                                        text: Func.get_format_date(model.date)
-                                        color: "grey"
-                                        font.pixelSize: Theme.fontSizeLarge
+                                    Row {
+                                        spacing: Theme.paddingLarge*5
+                                        Text {
+                                            text: Func.get_format_date(model.date)
+                                            color: "grey"
+                                            font.pixelSize: Theme.fontSizeLarge
+                                        }
                                     }
+
+
                                 }
+                                Column {
+                                    spacing: Theme.paddingLarge*3.4
 
                                 Button {
                                     id: btnDelete
@@ -317,6 +346,7 @@ Page {
                                     property string bdate: model.date
                                     property string bname: model.name
                                     property string bdesc: model.desc
+                                    property string bcomplete: model.complete
                                     height: 50
                                     width: 80
                                     icon {
@@ -366,6 +396,36 @@ Page {
 //                                        }
 //                                    }
                                 }
+//                                TextArea{
+//                                    width: 120
+//                                    height: 100
+
+//                                    id: complete_switch_text
+//                                    text: "не выполн."
+//                                    color: "grey"
+//                                    font.pixelSize: Theme.fontSizeExtraSmall
+//                                }
+                                TextSwitch {
+                                    id: complete_switch
+                                    checked: model.complete
+                                    leftMargin: 25
+                                    onCheckedChanged: {
+                                        updateComplete(btnDelete.bid, checked, btnDelete.bname);
+                                        updateProgress(current_day.day.toString(), current_day.month.toString(), current_day.year.toString())
+                                    }
+                                }
+
+
+//                                Text{
+//                                    width: 80
+
+//                                    id: complete_switch_text
+//                                    text: "не выполненно"
+//                                    color: "grey"
+//                                    font.pixelSize: Theme.fontSizeExtraSmall
+//                                }
+                                }
+
                             }
                         }
                     }
@@ -409,6 +469,38 @@ Page {
             }
             VerticalScrollDecorator { }
         }
+        Rectangle {
+            id: progress_layout
+
+            width: page.width
+            color: "#820101"
+            height: Theme.paddingLarge*10
+            anchors.bottom: flickable.bottom
+            ProgressBar {
+                id: progress_bar
+                anchors.centerIn: parent
+                anchors.top: parent.top
+                width: parent.width
+                height: Theme.paddingLarge*9
+                minimumValue: 0
+                maximumValue: 100
+                value: 50
+                label: qsTr("Выполнено на")
+                valueText: value + "%"
+            }
+        }
+
+
+
+//        ProgressBar {
+//            anchors.bottom: flickable.bottom
+//            width: parent.width
+//            minimumValue: 0
+//            maximumValue: 100
+//            value: 50
+//            label: qsTr("Выполнено на")
+//            valueText: value + "%"
+//        }
 
     }
 }
