@@ -47,7 +47,15 @@ function fullTextSearch(array, search) {
     });
 }
 
-function get_month(m) {
+function get_d_m_y(form) {
+    var arr = form.split(".");
+    return {"day": Number(arr[0]),
+            "month": Number(arr[1]),
+            "year": Number(arr[2])
+    }
+}
+
+function get_month(m, loc) {
     var months = ['Январь', "Февраль", "Март",
              "Апрель", "Май", "Июнь", "Июль",
              "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]

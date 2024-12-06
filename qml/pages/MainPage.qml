@@ -13,10 +13,6 @@ Page {
     property var db
     property var tasks
     property string _table: "Tasks"
-    property string todayDate: new Date()
-    onTodayDateChanged: {
-        console.log("todayDate:", todayDate)
-    }
 
     QtObject {
         id: model
@@ -69,7 +65,8 @@ Page {
             tx.executeSql("CREATE TABLE IF NOT EXISTS " + _table + "(date TEXT, name TEXT, desc TEXT, complete BOOL)");
             console.log("Table created!")
         })
-        db = dbase
+        db = dbase;
+        insertTestData();
     }
 
     Component.onCompleted: {
@@ -150,10 +147,43 @@ Page {
         return f
     }
 
-//    function init(){
-//        console.log("main init")
-//        initializeDatabase()
-//    }
+    function insertTestData() {
+        var data_pass = (false)?[[ "07.01.2025", "Заглушка 1", "Описание заглушки 1", false],
+                            [ "08.01.2025", "Заглушка 2", "Описание заглушки 2", false],
+                            [ "11.01.2025", "Заглушка 3", "Описание заглушки 3", false],
+                            [ "03.12.2024", "Заглушка 4", "Описание заглушки 4", false],
+                            [ "04.01.2025", "Заглушка 5", "Описание заглушки 5", false],
+                            [ "15.12.2024", "Заглушка 6", "Описание заглушки 6", false]]:[]
+
+        var data = (true)?[[ "03.12.2024", "ДЗ Схемотехника", "Доделать ДЗ 1 с автоматом", false],
+                            [ "19.12.2024", "ДЗ ОДК", "Отправить на почту ДЗ", false],
+                            [ "17.01.2025", "Экзамен по сетям", "Подготовиться к экзамену по сетям", false],
+                            [ "11.01.2025", "Экзамен по ССРПО", "Подготовиться к экзамену по ССРПО", false],
+                            [ "09.12.2024", "Защита курсовой ТРПС", "Подготовиться к защите курсовой по ТРПС", false],
+                            [ "14.12.2024", "Курсовая ТРПС", "Сдать на подпись титул РПЗ", false],
+                            [ "18.12.2024", "Проект для РИП", "Закончить  разработку TaskAPI", false],
+                            [ "05.12.2024", "Утреняя пробежка", "Пробежать без остановки 3 км за 15 минут", false],
+                            ]:[]
+
+        try {
+                db.transaction(function (tx) {
+                    var item, i;
+                    for (i=0; i< data.length; i++) {
+                        item = data[i];
+                        saveData(tx, item[0],item[1],item[2],item[3]);
+                    }
+                    for (i=0; i< data_pass.length; i++) {
+                        item = data_pass[i];
+                        saveData(tx, item[0],item[1],item[2],item[3]);
+                    }
+                })
+        } catch (err) {
+                console.log("ERROR INSERT TEST DATA: " + err)
+        };
+    }
+    function saveData(tx, col1, col2, col3, col4) {
+        tx.executeSql("INSERT INTO " + _table + " VALUES(?, ?, ?, ?)", [col1, col2, col3, col4]);
+    }
 
     PageHeader {
         id: pageHeader
@@ -171,7 +201,6 @@ Page {
             },
             Button {
                 id: addButton
-                objectName: "add_event_button"
                 backgroundColor: "transparent"
                 color: "#e30000"
                 anchors.left: aboutButton.right
@@ -185,9 +214,9 @@ Page {
                 }
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: pageStack.push(Qt.resolvedUrl("AddEventPage.qml"))
-            },Button {
+            },
+            Button {
                 id: allButton
-                objectName: "add_event_button"
                 backgroundColor: "transparent"
                 color: "white"
                 highlightColor: "red"
@@ -344,13 +373,6 @@ Page {
                 spacing: Theme.paddingLarge
                 anchors.top: pulldownmenu.bottom
 
-//                Button {
-//                    objectName: "graphiceditorButton"
-//                    anchors.horizontalCenter: parent.horizontalCenter
-//                    text: "Открыть редактор"
-//                    onClicked: pageStack.push(Qt.resolvedUrl("GraphicEditorPage.qml"))
-//                }
-
                 ListView {
                     objectName: "flickable2"
                     contentWidth: page.width
@@ -362,27 +384,24 @@ Page {
                         spacing: 50
 
                         Column {
-//                            Component.onCompleted: {
-//                                datePicker.date = new Date(202, primaryMonth, 12, 0, 0)
-//                            }
+                            Component.onCompleted: {
+                                console.log("DatePicker1", datePicker.month)
+                            }
+
                             Label {
                                 text: Func.get_month(datePicker.month) + " " + datePicker.year
+//                                text: "The date is: " + Date().toLocaleString(Qt.locale())
                                 color: "white"
-        //                        anchors.bottom: datePicker
                                 font.pixelSize: Theme.fontSizeExtraLargeBase
                                 leftPadding: 20
                             }
                             DatePicker {
                                 id: datePicker
-                //                ColorPickerPage: ""
 
                                 monthYearVisible: false
                                 daysVisible: false
                                 weeksVisible: false
                                 _weekColumnVisible: false
-                                Component.onCompleted: {
-                                    console.log("primaryMonth: ", datePicker.month)
-                                }
 
                                 function getModelData(dateObject, primaryMonth) {
                                     var y = dateObject.getFullYear()
@@ -419,29 +438,53 @@ Page {
                                     onClicked: {
                                         datePicker.date = new Date(year, month-1, day, 12, 0, 0)
                                         var page = pageStack.push(Qt.resolvedUrl("DayPage.qml"))
-//                                        console.log()
                                         page.init(datePicker.year, datePicker.month, datePicker.day, datePicker.date.toString())
-//                                        page.init(datePicker.year.toString(), datePicker.month.toString(), datePicker.day.toString(), datePicker.date.toString())
-    //                                    Func.func()
                                     }
                                     Label {
                                         id: dd
                                         anchors.centerIn: parent
                                         text: day
-                                        color: month === primaryMonth ? "#ff0000" : "#800000"
-                //                        font.bold: holiday
-                                        font.pixelSize: !holiday? Theme.fontSizeMedium : Theme.fontSizeExtraSmall
+                                        color: month === primaryMonth ? (isToday()? "#e0e0e0" : "#ff0000"): "#800000"
+                                        function isToday(){
+                                            var date_now = new Date();
+                                            return (year === date_now.getFullYear() &
+                                                    month - 1 === date_now.getMonth() &
+                                                    day === date_now.getDate())
+                                        }
+                                        font.bold: isToday()
+                                        font.pixelSize: !isToday()? Theme.fontSizeMedium : Theme.fontSizeLarge
                                     }
-//                                    Icon {
-//                                        id: mark
-//                                        anchors.bottom: parent.bottom
-////                                        anchors.horizontalCenter: parent.horizontalCenter
-//                                        anchors.centerIn: parent
-//                                        source: Qt.resolvedUrl("../icons/white_circle.png")
-////                                        color: "transparent"
+                                    Icon {
+                                        id: circle_mark
+                                        anchors.top: dd.bottom
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        source: Qt.resolvedUrl("../icons/white_circle.png")
 
-//                                        height: 30
-//                                        width: 30
+                                        height: 25
+                                        width: 25
+                                        visible: false
+                                        property int cnt: pageStack.depth
+                                        onCntChanged: {
+
+                                            if (cnt == 1) {
+                                                if (checkDate(String(day), String(month), String(year))) {
+                                                    circle_mark.visible = true
+                                                } else {circle_mark.visible = false}
+                                            }
+                                        }
+                                        Component.onCompleted: {
+//                                            initializeDatabase()
+                                            if (checkDate(String(day), String(month), String(year))) {
+                                                circle_mark.visible = true
+                                            } else {circle_mark.visible = false}
+                                        }
+                                    }
+//                                    Label {
+//                                        id: mark
+//                                        anchors.top: dd.bottom
+//                                        anchors.horizontalCenter: parent.horizontalCenter
+//                                        text: "*"
+//                                        font.pixelSize: Theme.fontSizeExtraLarge
 //                                        visible: false
 //                                        property int cnt: pageStack.depth
 //                                        onCntChanged: {
@@ -459,41 +502,20 @@ Page {
 //                                            } else {mark.visible = false}
 //                                        }
 //                                    }
-                                    Label {
-                                        id: mark
-                                        anchors.top: dd.bottom
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: "*"
-                                        font.pixelSize: Theme.fontSizeExtraLarge
-                                        visible: false
-                                        property int cnt: pageStack.depth
-                                        onCntChanged: {
-
-                                            if (cnt == 1) {
-                                                if (checkDate(String(day), String(month), String(year))) {
-                                                    mark.visible = true
-                                                } else {mark.visible = false}
-                                            }
-                                        }
-                                        Component.onCompleted: {
-//                                            initializeDatabase()
-                                            if (checkDate(String(day), String(month), String(year))) {
-                                                mark.visible = true
-                                            } else {mark.visible = false}
-                                        }
-                                    }
                                 }
                             }
                         }
                         Column {
                             Component.onCompleted: {
-                                datePicker2.date = new Date(datePicker.year, datePicker.month-2, 1, 0, 0)
+                                console.log("DatePicker2", datePicker.month-1)
+                                datePicker2.date = new Date(datePicker.year, datePicker.month, 1, 0, 0)
+                                console.log("DatePicker2", datePicker2.month)
+
                             }
 
                             Label {
                                 text: Func.get_month(datePicker2.month) + " " + datePicker2.year
                                 color: "white"
-        //                        anchors.bottom: datePicker
                                 font.pixelSize: Theme.fontSizeExtraLargeBase
                                 leftPadding: 20
                             }
@@ -541,36 +563,38 @@ Page {
                                         datePicker2.date = new Date(year, month-1, day, 12, 0, 0)
                                         var page = pageStack.push(Qt.resolvedUrl("DayPage.qml"))
                                         page.init(datePicker2.year, datePicker2.month, datePicker2.day, datePicker2.date.toString())
-    //                                    Func.func()
                                     }
                                     Label {
                                         id: dd2
                                         anchors.centerIn: parent
                                         text: day
                                         color: month === primaryMonth ? "#ff0000" : "#800000"
-                //                        font.bold: holiday
-                                        font.pixelSize: !holiday? Theme.fontSizeMedium : Theme.fontSizeExtraSmall
+//                                        font.bold: holiday
+//                                        font.pixelSize: !holiday? Theme.fontSizeMedium : Theme.fontSizeExtraSmall
                                     }
-                                    Label {
-                                        id: mark2
+                                    Icon {
+                                        id: circle_mark2
                                         anchors.top: dd2.bottom
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        text: "*"
-                                        font.pixelSize: Theme.fontSizeExtraLarge
+                                        source: Qt.resolvedUrl("../icons/white_circle.png")
+
+                                        height: 25
+                                        width: 25
                                         visible: false
                                         property int cnt: pageStack.depth
                                         onCntChanged: {
+
                                             if (cnt == 1) {
                                                 if (checkDate(String(day), String(month), String(year))) {
-                                                    mark2.visible = true
-                                                }  else {mark2.visible = false}
+                                                    circle_mark2.visible = true
+                                                } else {circle_mark2.visible = false}
                                             }
                                         }
                                         Component.onCompleted: {
 //                                            initializeDatabase()
                                             if (checkDate(String(day), String(month), String(year))) {
-                                                mark2.visible = true
-                                            } else {mark2.visible = false}
+                                                circle_mark2.visible = true
+                                            } else {circle_mark2.visible = false}
                                         }
                                     }
                                 }
@@ -578,7 +602,7 @@ Page {
                         }
                         Column {
                             Component.onCompleted: {
-                                datePicker3.date = new Date(datePicker.year, datePicker.month-3, 1, 12, 0, 0)
+                                datePicker3.date = new Date(datePicker.year, datePicker.month+1, 1, 12, 0, 0)
                             }
 
                             Label {
@@ -639,31 +663,36 @@ Page {
                                         id: dd3
                                         anchors.centerIn: parent
                                         text: day
-                                        color: month === primaryMonth ? "#ff0000" : "#800000"
-                //                        font.bold: holiday
-                                        font.pixelSize: !holiday? Theme.fontSizeMedium : Theme.fontSizeExtraSmall
+                                        color: month === primaryMonth ? (isToday()? "white" : "#ff0000"): "#800000"
+                                        function isToday(){
+                                            var date_now = new Date()
+                                            return (datePicker3.year === date_now.year &
+                                                datePicker3.month - 1 === date_now.month &
+                                                datePicker3.day === date_now.day)
+                                        }
                                     }
-                                    Label {
-                                        id: mark3
+                                    Icon {
+                                        id: circle_mark3
                                         anchors.top: dd3.bottom
                                         anchors.horizontalCenter: parent.horizontalCenter
+                                        source: Qt.resolvedUrl("../icons/white_circle.png")
 
-                                        text: "*"
-                                        font.pixelSize: Theme.fontSizeExtraLarge
+                                        height: 25
+                                        width: 25
                                         visible: false
                                         property int cnt: pageStack.depth
                                         onCntChanged: {
+
                                             if (cnt == 1) {
                                                 if (checkDate(String(day), String(month), String(year))) {
-                                                    mark3.visible = true
-                                                } else {mark3.visible = false}
+                                                    circle_mark3.visible = true
+                                                } else {circle_mark3.visible = false}
                                             }
                                         }
                                         Component.onCompleted: {
-//                                            initializeDatabase()
                                             if (checkDate(String(day), String(month), String(year))) {
-                                                mark3.visible = true
-                                            } else {mark3.visible = false}
+                                                circle_mark3.visible = true
+                                            } else {circle_mark3.visible = false}
                                         }
                                     }
                                 }

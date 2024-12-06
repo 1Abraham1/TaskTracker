@@ -18,15 +18,8 @@ Page {
     property int pageCount: pageStack.depth
     property string context_menu_state: "date_down"
     property bool have_search: false
-    onPageCountChanged: {
-        updateRows()
-    }
+    property int count_task: 0
 
-    function updateRows() {
-        taskModel.clear()
-        selectRows()
-        if (empty) {empty_layout.visible = true; progress_layout.visible = false}
-    }
     Task {
         id: task
     }
@@ -85,11 +78,23 @@ Page {
         );
         updateRows()
     }
+
     function deleteTask(bid, bindex, bname) {
         taskModel.remove(bindex)
         console.log("DELETED:", bid, "name", bname)
         deleteRow(bid)
     }
+
+    onPageCountChanged: {
+        updateRows()
+    }
+
+    function updateRows() {
+        taskModel.clear()
+        selectRows()
+        if (empty) {empty_layout.visible = true; progress_layout.visible = false}
+    }
+
     function updateComplete(id, complete, name){
         db.transaction(function (tx) {
             tx.executeSql(
@@ -112,7 +117,8 @@ Page {
                     all_task++;
                     if (task.getComplete()) {complete_task++}
                 }
-                progress_bar.value = (complete_task/all_task)*100;
+                progress_bar.value = parseInt((complete_task/all_task)*100);
+
             });
     }
 
@@ -142,25 +148,9 @@ Page {
                                   "desc": task.getDesc(),
                                   "complete": task.getComplete(),
                                   "index": ind});
-//                    if (search !== undefined) {
-//                        if (task.getName().indexOf(search) !== -1) {
-//                            ind++;
-//                            data.push({"id": task.getID(),
-//                                          "date": task.getDate(),
-//                                          "name": task.getName(),
-//                                          "desc": task.getDesc(),
-//                                          "index": ind});
-//                        }
-//                    } else {
-//                        ind++;
-//                        data.push({"id": task.getID(),
-//                                      "date": task.getDate(),
-//                                      "name": task.getName(),
-//                                      "desc": task.getDesc(),
-//                                      "index": ind});
-//                    }
                 }
                 progress_bar.value = parseInt((complete_task/ind)*100);
+                page.count_task = ind;
                 console.log("TABLE SELECTED")
                 if (mode === undefined) {
                     Func.sortArray(data, context_menu_state)
@@ -260,13 +250,6 @@ Page {
         TextField {
             id: search
             visible: false
-//            background: Rectangle {
-//                width: search.width
-//                height: search.height
-//                radius: 20
-//                color: "grey"
-
-//            }
 
             color: "white"
             backgroundStyle: TextEditor.FilledBackground//NoBackground
@@ -289,7 +272,7 @@ Page {
             _backgroundRadius: 10
 
             descriptionColor: "white"
-            description: "Сортировать"
+            description: qsTr("Сортировать")
             valueColor: "white"
             menu: ContextMenu {
                 id: context_menu
@@ -325,12 +308,6 @@ Page {
                 }
             }
         }
-//        Rectangle {
-//            border.width: 2
-//            border.color: "#303030"
-//            width: page.width
-//            height: 2
-//        }
     }
     Rectangle {
         id: rec_space
@@ -344,31 +321,23 @@ Page {
         color: '#0d0d0d'
         anchors.top: rec_space.bottom
         width: page.width
-        height: page.height - pageHeader.height
+        height: page.height - 2.2*pageHeader.height
 
         SilicaFlickable {
             id: flickable
             clip: true
             anchors.fill: parent
-//            contentHeight: empty_layout.height + noteListView.height + Theme.paddingLarge
+            contentHeight: empty_layout.height + (Theme.paddingLarge*10)*page.count_task + 4*Theme.paddingLarge
 
             ListView {
                 id: noteListView
                 width: parent.width
-                height: page.height
-                spacing: 30
+                height: empty_layout.height + (Theme.paddingLarge*10)*page.count_task - 2*Theme.paddingLarge
+//                anchors.top: flickable.top
+//                anchors.bottom: progress_bar.top
+                spacing: Theme.paddingLarge
                 contentHeight: mmenu.height
                 model: taskModel
-//                headerItem: Item{
-//                    Rectangle {
-//                        height: 1
-//                        width: 1
-//                        color: "transparent"
-//                        Text {
-//                            text: ""
-//                        }
-//                    }
-//                }
 
                 delegate: MouseArea {
                     id: mouseArea
@@ -377,8 +346,8 @@ Page {
                     property string mname: model.name
                     property string mdesc: model.desc
                     anchors.horizontalCenter: parent.horizontalCenter
-                    height: 250
-                    width: page.width - 100
+                    height: (Theme.paddingLarge*10)
+                    width: page.width - (Theme.paddingLarge*4)
 
                     onClicked: {
                         var page = pageStack.push(Qt.resolvedUrl("ShowTaskPage.qml"))
@@ -513,8 +482,8 @@ Page {
 //                }
 
                 Rectangle {
-                    height: 250
-                    width: page.width - 100
+                    height: (Theme.paddingLarge*10)
+                    width: page.width - (Theme.paddingLarge*4)
                     anchors.margins: 50
                     anchors.horizontalCenter: parent.horizontalCenter
                     radius: 20
@@ -525,7 +494,7 @@ Page {
                         anchors.centerIn: parent
                         color: "transparent"
                         Text {
-                            text: "Нет задач"
+                            text: qsTr("Нет задач")
                             color: "white"
                             anchors.verticalCenter: parent.verticalCenter
                             font.pixelSize: Theme.fontSizeLarge
@@ -540,29 +509,20 @@ Page {
 
             width: page.width
             color: "#820101"
-            height: Theme.paddingLarge*12
+            height: Theme.paddingLarge*6
             anchors.bottom: flickable.bottom
             ProgressBar {
                 id: progress_bar
                 anchors.centerIn: parent
                 anchors.top: parent.top
                 width: parent.width
-                height: Theme.paddingLarge*11
+                height: Theme.paddingLarge*6
                 minimumValue: 0
                 maximumValue: 100
-
                 value: 50
                 label: qsTr("Выполнено на")
                 valueText: value + "%"
             }
         }
-
     }
-//    Component.onCompleted: {
-//        initializeDatabase()
-//        console.log("-----------")
-//        console.log("current_day.coorect_date: " + current_day.coorect_date)
-//        selectRows(current_day.day.toString(), current_day.month.toString(), current_day.year.toString())
-//        if (empty) {empty_layout.visible = true}
-//    }
 }

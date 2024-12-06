@@ -16,6 +16,7 @@ Page {
     property string _table: "Tasks"
     property double koaff: 0.66
     property int pageCount: pageStack.depth
+    property int count_task: 0
     onPageCountChanged: {
         updateRows()
     }
@@ -130,7 +131,8 @@ Page {
                     }
 
                 }
-                progress_bar.value = (complete_task/ind)*100;
+                progress_bar.value = parseInt((complete_task/ind)*100);
+                page.count_task = ind
                 if (data.length == 0) {
                     console.log("data:", data)
                     empty = true
@@ -164,7 +166,8 @@ Page {
                     }
 
                 }
-                progress_bar.value = (complete_task/ind)*100;
+                progress_bar.value = parseInt((complete_task/ind)*100);
+
 
             });
     }
@@ -263,19 +266,19 @@ Page {
         color: '#0d0d0d'
         anchors.top: rec_space.bottom
         width: page.width
-        height: page.height - pageHeader.height
+        height: page.height - 1.5*pageHeader.height
 
         SilicaFlickable {
             id: flickable
             clip: true
             anchors.fill: parent
-//            contentHeight: empty_layout.height + noteListView.height + Theme.paddingLarge
+            contentHeight: empty_layout.height + (Theme.paddingLarge*10)*page.count_task + 4*Theme.paddingLarge
 
             ListView {
                 id: noteListView
                 width: parent.width
-                height: page.height
-                spacing: 30
+                height: empty_layout.height + (Theme.paddingLarge*10)*page.count_task - 0*Theme.paddingLarge
+                spacing: Theme.paddingLarge
                 contentHeight: menu.height
                 model: taskModel
 
@@ -286,8 +289,8 @@ Page {
                     property string mname: model.name
                     property string mdesc: model.desc
                     anchors.horizontalCenter: parent.horizontalCenter
-                    height: 250
-                    width: page.width - 100
+                    height: (Theme.paddingLarge*10)
+                    width: page.width - (Theme.paddingLarge*4)
 
                     onClicked: {
                         var page = pageStack.push(Qt.resolvedUrl("ShowTaskPage.qml"))
@@ -339,93 +342,70 @@ Page {
                                 Column {
                                     spacing: Theme.paddingLarge*3.4
 
-                                Button {
-                                    id: btnDelete
-                                    property int bindex: model.index
-                                    property string bid: model.id
-                                    property string bdate: model.date
-                                    property string bname: model.name
-                                    property string bdesc: model.desc
-                                    property string bcomplete: model.complete
-                                    height: 50
-                                    width: 80
-                                    icon {
-//                                            source: Qt.resolvedUrl("../icons/TaskTracker.svg")
-                                        source: Qt.resolvedUrl("../icons/delete_icon.png")
-                                        sourceSize { width: icon.width; height: icon.height }
-//                                        color: "transparent"
+                                    Button {
+                                        id: btnDelete
+                                        property int bindex: model.index
+                                        property string bid: model.id
+                                        property string bdate: model.date
+                                        property string bname: model.name
+                                        property string bdesc: model.desc
+                                        property string bcomplete: model.complete
                                         height: 50
-                                        width: 50
-                                    }
-//                                        text: qsTr("Удалить")
-                                    color: "white"
-                                    backgroundColor: button_color
-                                    onClicked: {
-                                        deleteTask(bid, bindex, bname);
-//                                        var dial = pageStack.push(del_dialog)
-//                                        dial.accepted.connect(function() {
-//                                            deleteTask(bid, bindex, bname);
-//                                            console.log("dialog.accepted:")
-//                                        })
-                                    }
-//                                    onClicked: {
-//                                        var dialog = pageStack.push(Qt.resolvedUrl("DeleteDialog.qml"));
-//                                        dialog.accepted.connect(function() {
-//                                            deleteTask(bid, bindex, bname)
-//                                            console.log("dialog.accepted.connect: Delete")
-//                                        });
-//                                    }
+                                        width: 80
+                                        icon {
+                                            source: Qt.resolvedUrl("../icons/delete_icon.png")
+                                            sourceSize { width: icon.width; height: icon.height }
+                                            height: 50
+                                            width: 50
+                                        }
+                                        color: "white"
+                                        backgroundColor: button_color
+                                        onClicked: {
+                                            deleteTask(bid, bindex, bname);
+    //                                        var dial = pageStack.push(del_dialog)
+    //                                        dial.accepted.connect(function() {
+    //                                            deleteTask(bid, bindex, bname);
+    //                                            console.log("dialog.accepted:")
+    //                                        })
+                                        }
+    //                                    onClicked: {
+    //                                        var dialog = pageStack.push(Qt.resolvedUrl("DeleteDialog.qml"));
+    //                                        dialog.accepted.connect(function() {
+    //                                            deleteTask(bid, bindex, bname)
+    //                                            console.log("dialog.accepted.connect: Delete")
+    //                                        });
+    //                                    }
 
-//                                    Component {
-//                                        id: del_dialog
-//                                        Dialog {
-//                                            DialogHeader {
-//                                                id: header
-//                                                title: "Подтверждение удаления"
-//                                            }
-////                                            canAccept: true
-//                                            Label {
-//                                                text: canAccept//"Удалить задачу?"
-//                                                anchors.top: header.bottom
-//                                                x: Theme.horizontalPageMargin
-//                                                color: Theme.highlightColor
-//                                            }
-//                                            onAccepted: {
-//                                                console.log('DialogResult.Accepted')
-//                                            }
-//                                        }
-//                                    }
-                                }
-//                                TextArea{
-//                                    width: 120
-//                                    height: 100
-
-//                                    id: complete_switch_text
-//                                    text: "не выполн."
-//                                    color: "grey"
-//                                    font.pixelSize: Theme.fontSizeExtraSmall
-//                                }
-                                TextSwitch {
-                                    id: complete_switch
-                                    checked: model.complete
-                                    leftMargin: 25
-                                    onCheckedChanged: {
-                                        updateComplete(btnDelete.bid, checked, btnDelete.bname);
-                                        updateProgress(current_day.day.toString(), current_day.month.toString(), current_day.year.toString())
+    //                                    Component {
+    //                                        id: del_dialog
+    //                                        Dialog {
+    //                                            DialogHeader {
+    //                                                id: header
+    //                                                title: "Подтверждение удаления"
+    //                                            }
+    ////                                            canAccept: true
+    //                                            Label {
+    //                                                text: canAccept//"Удалить задачу?"
+    //                                                anchors.top: header.bottom
+    //                                                x: Theme.horizontalPageMargin
+    //                                                color: Theme.highlightColor
+    //                                            }
+    //                                            onAccepted: {
+    //                                                console.log('DialogResult.Accepted')
+    //                                            }
+    //                                        }
+    //                                    }
+                                    }
+                                    TextSwitch {
+                                        id: complete_switch
+                                        checked: model.complete
+                                        leftMargin: 25
+                                        onCheckedChanged: {
+                                            updateComplete(btnDelete.bid, checked, btnDelete.bname);
+                                            updateProgress(current_day.day.toString(), current_day.month.toString(), current_day.year.toString())
+                                        }
                                     }
                                 }
-
-
-//                                Text{
-//                                    width: 80
-
-//                                    id: complete_switch_text
-//                                    text: "не выполненно"
-//                                    color: "grey"
-//                                    font.pixelSize: Theme.fontSizeExtraSmall
-//                                }
-                                }
-
                             }
                         }
                     }
@@ -437,18 +417,10 @@ Page {
                 visible: false
                 width: page.width
                 spacing: Theme.paddingLarge
-//                Rectangle {
-//                    height: 1
-//                    width: 1
-//                    color: "transparent"
-//                    Text {
-//                        text: ""
-//                    }
-//                }
 
                 Rectangle {
-                    height: 250
-                    width: page.width - 100
+                    height: (Theme.paddingLarge*10)
+                    width: page.width - (Theme.paddingLarge*4)
                     anchors.margins: 50
                     anchors.horizontalCenter: parent.horizontalCenter
                     radius: 20
@@ -459,7 +431,7 @@ Page {
                         anchors.centerIn: parent
                         color: "transparent"
                         Text {
-                            text: "Нет задач"
+                            text: qsTr("Нет задач")
                             color: "white"
                             anchors.verticalCenter: parent.verticalCenter
                             font.pixelSize: Theme.fontSizeLarge
@@ -474,14 +446,14 @@ Page {
 
             width: page.width
             color: "#820101"
-            height: Theme.paddingLarge*10
+            height: Theme.paddingLarge*6
             anchors.bottom: flickable.bottom
             ProgressBar {
                 id: progress_bar
                 anchors.centerIn: parent
                 anchors.top: parent.top
                 width: parent.width
-                height: Theme.paddingLarge*9
+                height: Theme.paddingLarge*6
                 minimumValue: 0
                 maximumValue: 100
                 value: 50
@@ -489,18 +461,5 @@ Page {
                 valueText: value + "%"
             }
         }
-
-
-
-//        ProgressBar {
-//            anchors.bottom: flickable.bottom
-//            width: parent.width
-//            minimumValue: 0
-//            maximumValue: 100
-//            value: 50
-//            label: qsTr("Выполнено на")
-//            valueText: value + "%"
-//        }
-
     }
 }

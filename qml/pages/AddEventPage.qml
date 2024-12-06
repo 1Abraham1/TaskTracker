@@ -13,9 +13,7 @@ Page {
      property var db
 
      property string _table: "Tasks"
-//     DBTaskPage {
-//         id: main_db
-//     }
+
      QtObject {
          id: model
 
@@ -50,7 +48,6 @@ Page {
      }
      Notification {
          id: notification
-
      }
 
 
@@ -81,7 +78,6 @@ Page {
 
             PageHeader {
                 id: header
-//                title: qsTr("Событие")
                 titleColor: "white"
                 extraContent.children: [
                     Button {
@@ -100,17 +96,40 @@ Page {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.horizontalCenter: parent.horizontalCenter
                     },
-                    Label {
-                        id: succes
-                        text: qsTr("Сохранено")
-
-                        color: "green"
-                        visible: false
-                        font.pixelSize: Theme.fontSizeLargeBase
+                    Button {
+                        id: menu_save
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
+                        backgroundColor: "#292929"
+                        width: Theme.buttonWidthExtraSmall - Theme.paddingLarge
 
+                        color: "white"
+                        text: qsTr("Сохранить")
+
+                        onClicked: {
+                            verification(name.text, desc.text, date.text);
+                        }
+
+                        function verification(name_text, desc_text, date_text) {
+                            if (desc_text === "" |
+                                    date_text === "" |
+                                    name_text === "" | !(Func.isValidDate(date_text))){
+                                notification.previewBody = "!"
+                                notification.previewSummary = qsTr("Введите данные корректно")
+                            }
+                            else {
+                                addRow()
+                                notification.previewBody = "!"
+                                notification.previewSummary = qsTr("Успешно сохраненно")
+                                desc.text = ""
+                                date.text = ""
+                                name.text = ""
+                                pageStack.pop()
+                            }
+                            notification.publish()
+                        }
                     }
+
                 ]
             }
 
@@ -131,25 +150,6 @@ Page {
                 width: parent.width
                 spacing: Theme.paddingLarge
 
-//                Button {
-//                    id: button
-//                    text: "Выберите дату"
-
-//                    onClicked: {
-//                        var dialog = pageStack.push(pickerComponent, {
-//                            date: new Date('2012/11/23')
-//                        })
-//                        dialog.accepted.connect(function() {
-//                            button.text = "You chose: " + dialog.dateText
-//                        })
-//                    }
-
-//                    Component {
-//                        id: pickerComponent
-//                        DatePickerDialog {}
-//                    }
-//                }
-
                 TextField {
                     id: date
                     focus: true
@@ -158,12 +158,82 @@ Page {
                     backgroundStyle: TextEditor.FilledBackground//NoBackground
                     placeholderColor: "#5c5c5c"
                     cursorColor: "red"
-//                    acceptableInput: text.length === 10
-                    placeholderText: qsTrId("Дата начала")
+                    placeholderText: qsTr("Дата выполнения")
                     EnterKey.iconSource: "image://theme/icon-m-enter-next"
                     EnterKey.onClicked: name.focus = true
                     onTextChanged: model.date = text
                     validator: RegExpValidator {regExp: /^(?:(?:31(\/|-|\.)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-|\.)(?:0?[13-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-|\.)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})$/}
+                }
+                Column {
+                    spacing: Theme.paddingLarge
+                    Label {
+                        text: Func.get_month(datePicker.month) + " " + datePicker.year
+                        color: "white"
+                        font.pixelSize: Theme.fontSizeExtraLargeBase
+                        leftPadding: 20
+                    }
+                    DatePicker {
+                        id: datePicker
+
+                        monthYearVisible: false
+                        daysVisible: true
+                        weeksVisible: false
+                        _weekColumnVisible: false
+
+
+                        function getModelData(dateObject, primaryMonth) {
+                            var y = dateObject.getFullYear()
+                            var m = dateObject.getMonth() + 1
+                            var d = dateObject.getDate()
+                            var data = {'year': y, 'month': m, 'day': d,
+                                        'primaryMonth': primaryMonth,
+                                        'holiday': (m === 1 && d === 1) || (m === 12 && (d === 25 || d === 26))}
+                            return data
+                        }
+
+                        modelComponent: Component {
+                            ListModel { }
+                        }
+
+                        onUpdateModel: {
+                            var i = 0
+                            var dateObject = new Date(fromDate)
+                            while (dateObject < toDate) {
+                                if (i < modelObject.count) {
+                                    modelObject.set(i, getModelData(dateObject, primaryMonth))
+                                } else {
+                                    modelObject.append(getModelData(dateObject, primaryMonth))
+                                }
+                                dateObject.setDate(dateObject.getDate() + 1)
+                                i++
+                            }
+                        }
+                        delegate: MouseArea {
+                            id: delegat
+                            width: datePicker.cellWidth
+                            height: datePicker.cellHeight
+
+                            onClicked: {
+                                datePicker.date = new Date(year, month-1, day, 12, 0, 0)
+                                date.text = Func.get_correct_date(day, month, year)
+                            }
+                            Label {
+                                id: dd
+                                anchors.centerIn: parent
+                                text: day
+                                color: month === primaryMonth ? (isToday()? "#e0e0e0" : "#ff0000"): "#800000"
+                                function isToday(){
+                                    var date_now = new Date();
+                                    return (year === date_now.getFullYear() &
+                                            month - 1 === date_now.getMonth() &
+                                            day === date_now.getDate())
+                                }
+                                font.bold: isToday()
+                                font.pixelSize: !isToday()? Theme.fontSizeMedium : Theme.fontSizeLarge
+                            }
+
+                        }
+                    }
                 }
 
                 TextField {
@@ -173,12 +243,11 @@ Page {
                     backgroundStyle: TextEditor.FilledBackground
                     placeholderColor: "#5c5c5c"
                     cursorColor: "red"
-                    label: qsTrId("Название")
+                    label: qsTr("Название")
                     color: "white"
                     EnterKey.iconSource: "image://theme/icon-m-enter-next"
                     EnterKey.onClicked: desc.focus = true
                     onTextChanged: model.name = text
-//                    validator: RegExpValidator {regExp: /^\\s*\\S[^]*/}
                     validator: RegExpValidator {regExp: /.*\\S.*/}
                 }
 
@@ -189,57 +258,19 @@ Page {
                     backgroundStyle: TextEditor.FilledBackground
                     placeholderColor: "#5c5c5c"
                     cursorColor: "red"
-                    label: qsTrId("Описание")
-                    onTextChanged: model.desc = text
+                    label: qsTr("Описание")
+                    onTextChanged: {model.desc = text;desc.focus = true}
+//                    EnterKey.onClicked: menu_save.verification(name.text, desc.text, date.text)
+
                     RegExpValidator {
                         id: rx
                         regExp: /^\\s*\\S[^]*/
                     }
-
                 }
-
-                Button {
-                    id: save
-                    anchors.horizontalCenter: parent.horizontalCenter
-//                    anchors.top: circle.bottom
-                    backgroundColor: button_color
-                    color: "white"
-                    text: "Сохранить"
-                    onClicked: {
-                        if (desc.text == "" |
-                                date.text == "" |
-                                name.text == "" | !(Func.isValidDate(date.text))){
-                            notification.previewBody = "!"
-                            notification.previewSummary = qsTr("Введите данные корректно")
-                        }
-                        else {
-                            addRow()
-                            notification.previewBody = "!"
-                            notification.previewSummary = qsTr("Успешно сохраненно")
-                        }
-                        notification.publish()
-//                        succes.visible = true
-                        desc.text = ""
-                        date.text = ""
-                        name.text = ""
-                        pageStack.pop()
-                    }
-                }
-//                Button {
-//                    id: show
-//                    anchors.horizontalCenter: parent.horizontalCenter
-////                    anchors.top: circle.bottom
-//                    backgroundColor: button_color
-//                    color: "white"
-//                    text: "Показать"
-//                    onClicked: selectRows()
-
-//                }
-
             }
-
          }
      }
+
      function addRow() {
          db.transaction(function (tx) {
              tx.executeSql(
@@ -249,21 +280,7 @@ Page {
              console.log("INSERT: " + model.name)
          })
      }
-     function selectRows() {
-         db.transaction(function (tx) {
-                 var rs = tx.executeSql("SELECT rowid, * FROM " + _table);
-                 var data = [];
-                 for (var i = 0; i < rs.rows.length; i++) {
-                     model.id = rs.rows.item(i).rowid;
-                     model.date = rs.rows.item(i).date;
-                     model.name = rs.rows.item(i).name;
-                     model.desc = rs.rows.item(i).desc;
-                     model.complete = rs.rows.item(i).complete;
-                     data.push(model.copy());
-                     console.log("SELECT: " + model.name)
-                 }
-             });
-     }
+
      function initializeDatabase() {
          var dbase = LocalStorage.openDatabaseSync("Tasks", "1.0", "Tasks
                  Database", 1000000)
@@ -271,7 +288,7 @@ Page {
              tx.executeSql("CREATE TABLE IF NOT EXISTS " + _table + "(date TEXT, name TEXT, desc TEXT, complete BOOL)");
              console.log("Table created!")
          })
-         db = dbase
+         db = dbase;
      }
      Component.onCompleted: initializeDatabase()
 }
